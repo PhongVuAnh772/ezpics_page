@@ -13,6 +13,22 @@
   }
 }
 
+/* Ẩn thanh cuộn ngang và dọc */
+body {
+  overflow: hidden;
+}
+
+/* Hoặc ẩn chỉ thanh cuộn dọc */
+body {
+  overflow-y: hidden;
+}
+
+/* Hoặc ẩn chỉ thanh cuộn ngang */
+body {
+  overflow-x: hidden;
+}
+
+
 .App-header {
   background-color: #282c34;
   min-height: 100vh;
