@@ -1,7 +1,7 @@
 import React from "react";
 import bg from "./background.jpg";
 import logo from "./ezpics-logo.png";
-import "./Login.css";
+import "./SignUp.css";
 function SignUp() {
   const backgroundStyle = {
     display: "flex",
@@ -159,7 +159,7 @@ function SignUp() {
                   textAlign: "center",
                 }}
               >
-                Bạn chưa có tài khoản ? - Đăng ký <a href="/sign-up">tại đây</a>
+                Bạn đã có tài khoản ? - <a href="/sign-up">Đăng nhập</a>
               </p>
             </div>
           </div>

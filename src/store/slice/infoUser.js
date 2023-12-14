@@ -1,22 +1,23 @@
-import { createSlice } from '@reduxjs/toolkit'
+import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-  value: 'https://apis.ezpics.vn/apis',
-}
+  info: [],
+};
 
 export const infoSlice = createSlice({
-  name: 'network',
+  name: 'info',
   initialState,
   reducers: {
-    CHANGE_VALUE: (state,actions) => {
-    
-      state.value = actions.payload
+    CHANGE_VALUE: (state, actions) => {
+      state.info = [...state.info, actions.payload];
     },
-    
+    DELETE_ALL_VALUES: (state) => {
+      state.info = [];
+    },
   },
-})
+});
 
 // Action creators are generated for each case reducer function
-export const { CHANGE_VALUE} = infoSlice.actions
+export const { CHANGE_VALUE,DELETE_ALL_VALUES } = infoSlice.actions;
 
-export default infoSlice.reducer
+export default infoSlice.reducer;

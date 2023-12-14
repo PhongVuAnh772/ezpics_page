@@ -1,9 +1,19 @@
-import React from "react";
+import React, { useState } from "react";
 import bg from "./background.jpg";
 import logo from "./ezpics-logo.png";
-import GoogleIcon from '@mui/icons-material/Google';
-import "./Login.css";
+import GoogleIcon from "@mui/icons-material/Google";
+import "./LoginEzpics.css";
+import axios from "axios";
+import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import {
+  CHANGE_VALUE_TOKEN,
+  CHANGE_STATUS_AUTH,
+} from "../../../store/slice/authSlice";
+
 function Login() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const backgroundStyle = {
     display: "flex",
     flexDirection: "column", // Use column direction to make flex: 1 work for height
@@ -12,8 +22,7 @@ function Login() {
     background: `url(${bg})`,
     flex: 1,
     minHeight: "100vh", // Set minimum height to 100% of the viewport height
-    width: "100%",
-    backgroundSize: "contain",
+    backgroundSize: "cover,contain",
   };
   const overlayStyle = {
     position: "absolute",
@@ -21,7 +30,7 @@ function Login() {
     left: 0,
     width: "100%",
     height: "100%",
-    background: "rgba(0, 0, 0, 0.4)", // Adjust the alpha value for the darkness
+    background: "rgba(0, 0, 0, 0.25)", // Adjust the alpha value for the darkness
   };
   const blockStyle = {
     padding: "20px",
@@ -29,10 +38,9 @@ function Login() {
     width: 300,
     borderRadius: "8px",
     marginTop: "3%",
-        animation: "fadeIn 0.5s ease-in-out" 
-
+    animation: "fadeIn 0.5s ease-in-out",
   };
-  
+
   const content = {
     width: "100%",
     minHeight: "100%",
@@ -50,6 +58,7 @@ function Login() {
     fontWeight: 500,
     fontSize: "16px",
     paddingLeft: "3%",
+    cursor: "pointer",
   };
   const textContentHeader = {
     color: "black",
@@ -73,6 +82,7 @@ function Login() {
     fontSize: "14px",
     fontWeight: 500,
     color: "rgb(255, 255, 255)",
+    cursor: "pointer",
     fontFamily:
       "Canva Sans,Noto Sans Variable,Noto Sans,-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif",
   };
@@ -84,28 +94,76 @@ function Login() {
     backgroundColor: "rgb(230, 56, 26)",
     borderRadius: 10,
     fontSize: "14px",
-    display:'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     fontWeight: 500,
     color: "rgb(255, 255, 255)",
+    cursor: "pointer",
+
     fontFamily:
       "Canva Sans,Noto Sans Variable,Noto Sans,-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif",
   };
   const header = {
     width: "100%",
-                paddingBottom: "10px",
-                paddingTop: "10px",
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
+    paddingBottom: "10px",
+    paddingTop: "10px",
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)"
+
+  };
+  const network = useSelector((state) => state.network.network);
+  const [loading, setLoading] = useState(false);
+  const [phoneNum, setPhoneNum] = useState("");
+  const [password, setPassWord] = useState("");
+  const authentication = useSelector((state) => state.auth.authentication);
+  const token = useSelector((state) => state.auth.token);
+  function setCookie(name, value, expirationHours) {
+    var date = new Date();
+    value = JSON.stringify(value);
+    date.setTime(date.getTime() + expirationHours * 60 * 60 * 1000); // Chuyển đổi giờ thành mili giây
+    var expires = "expires=" + date.toUTCString();
+    document.cookie = name + "=" + value + ";" + expires + ";path=/";
   }
+  var expirationHours = 3; // số giờ tồn tại của cookie
+
+  const signInButton = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.post(`${network}/checkLoginMemberAPI`, {
+        phone: phoneNum,
+        password: password,
+        token_device: "",
+      });
+      if (response.data.code === 0) {
+        console.log(response.data);
+        dispatch(CHANGE_STATUS_AUTH(true));
+        dispatch(CHANGE_VALUE_TOKEN(response.data?.info_member?.token));
+        setCookie("token", response.data?.info_member?.token, expirationHours);
+        setCookie("user_login", response.data?.info_member, expirationHours);
+        console.log(authentication, token);
+        setLoading(false);
+
+        navigate("/", { replace: true });
+      } else {
+        setLoading(false);
+
+        console.log(response.data);
+      }
+    } catch (e) {
+      setLoading(false);
+
+      console.error(e);
+    }
+  };
   return (
     <div style={backgroundStyle}>
       <div style={overlayStyle}>
         <div style={page}>
-          <div className="header" style={header}>
+          <div style={header} className="headerLogin">
             <img src={logo} alt="" style={{ width: 50, height: 50 }} />
             <div style={textHeader}>Tính năng</div>
             <div style={textHeader}>Mẫu thiết kế nổi bật</div>
@@ -132,8 +190,7 @@ function Login() {
               </p>
               <input
                 type="text"
-                id="fname"
-                name="firstname"
+                onChange={(e) => setPhoneNum(e.target.value)}
                 placeholder="Số điện thoại"
               />
 
@@ -150,13 +207,26 @@ function Login() {
               </p>
               <input
                 type="password"
-                id="lname"
-                name="lastname"
+                onChange={(e) => setPassWord(e.target.value)}
                 placeholder="Mật khẩu"
               />
-              <button style={submitButton}>Đăng nhập</button>
+              <button style={submitButton} onClick={() => signInButton()}>
+                 {loading ? <div class="lds-ring-login"><div></div><div></div><div></div><div></div></div> : "Đăng nhập"}
+              </button>
               <p style={{ fontSize: "12px", textAlign: "center" }}>Hoặc</p>
-              <button style={googleButton}><span><GoogleIcon style={{width: 15,height: 13,marginTop: 4.5,paddingRight: 5}}/></span>Đăng nhập bằng Google</button>
+              <button style={googleButton}>
+                <span>
+                  <GoogleIcon
+                    style={{
+                      width: 15,
+                      height: 13,
+                      marginTop: 4.5,
+                      paddingRight: 5,
+                    }}
+                  />
+                </span>
+                Đăng nhập bằng Google
+              </button>
               <p
                 style={{
                   fontFamily:

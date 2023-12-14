@@ -1,22 +1,22 @@
 import { createSlice } from '@reduxjs/toolkit'
 
 const initialState = {
-  value: 'https://apis.ezpics.vn/apis',
+  network: 'https://apis.ezpics.vn/apis',
 }
 
-export const counterSlice = createSlice({
+export const networkSlice = createSlice({
   name: 'network',
   initialState,
   reducers: {
     CHANGE_VALUE: (state,actions) => {
     
-      state.value = actions.payload
+      state.network = actions.payload
     },
     
   },
 })
 
 // Action creators are generated for each case reducer function
-export const { CHANGE_VALUE} = counterSlice.actions
+export const { CHANGE_VALUE} = networkSlice.actions
 
-export default counterSlice.reducer
+export default networkSlice.reducer

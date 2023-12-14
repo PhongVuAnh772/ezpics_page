@@ -9,11 +9,13 @@ import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 import { store } from './store/store';
 import { Provider } from 'react-redux'
+import { BrowserRouter } from 'react-router-dom';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <Provider store={store}>
-    <App />
+    <BrowserRouter><App /></BrowserRouter>
+    
   </Provider>,
   document.getElementById('root')
 );
