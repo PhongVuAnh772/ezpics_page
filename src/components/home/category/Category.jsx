@@ -3,6 +3,17 @@ import "./Category.css";
 import { styled, useTheme } from "@mui/material/styles";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import "./loadingFavorite.css";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Paper from "@mui/material/Paper";
+import confirmBuying from "./shopping-bag.png";
+import { toast, ToastContainer } from "react-toastify";
+
 import {
   BrowserRouter as Router,
   Switch,
@@ -13,22 +24,32 @@ import {
   Outlet,
   useOutletContext,
   useNavigate,
+  Navigate,
   useParams,
 } from "react-router-dom";
 import TravelExploreOutlinedIcon from "@mui/icons-material/TravelExploreOutlined";
 import crown from "./crown.png";
 import FavoriteIcon from "@mui/icons-material/Favorite";
+import CheckIcon from "@mui/icons-material/Check";
 import axios from "axios";
 import { useSelector, useDispatch } from "react-redux";
 import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlined";
 import fbicon from "./fb.png";
 import messicon from "./messenger.png";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
+import Modal from "@mui/material/Modal";
 import pinterest from "./pinterest.png";
 import twitter from "./twitter.png";
 import Carousel from "react-multi-carousel";
 import "react-multi-carousel/lib/styles.css";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import Box from "@mui/material/Box";
+import { CHANGE_VALUE_TOKEN } from "../../../store/slice/authSlice";
+import { CHANGE_VALUE } from "../../../store/slice/infoUser";
+import Cookies from "js-cookie";
+
 function Category({
   image = "https://down-vn.img.susercontent.com/file/a262ff1f44dab967e8e7d50c7bda514d",
   pro = true,
@@ -40,9 +61,13 @@ function Category({
   color = "black",
   id_cart = 18934,
 }) {
+  const [loadingFavorite, setLoadingFavorite] = React.useState(false);
+  const [tokenString, setTokenString] = React.useState("");
+
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   let location = useLocation();
-
+  const [favorite, setFavorite] = React.useState(false);
   const { id } = useParams();
   const network = useSelector((state) => state.network.network);
   const [userId, setUserId] = React.useState("");
@@ -63,6 +88,66 @@ function Category({
       slidesToSlide: 1, // optional, default to 1.
     },
   };
+
+  function checkTokenCookie() {
+    // Lấy tất cả các cookies
+    var allCookies = document.cookie;
+
+    // Tách các cookies thành mảng các cặp key-value
+    var cookiesArray = allCookies.split("; ");
+
+    // Tìm cookie có tên là "token"
+    var tokenCookie;
+    for (var i = 0; i < cookiesArray.length; i++) {
+      var cookie = cookiesArray[i];
+      var cookieParts = cookie.split("=");
+      var cookieName = cookieParts[0];
+      var cookieValue = cookieParts[1];
+
+      if (cookieName === "token") {
+        tokenCookie = cookieValue;
+        break;
+      }
+    }
+
+    // Kiểm tra nếu đã tìm thấy cookie "token"
+    if (tokenCookie) {
+      console.log('Giá trị của cookie "token" là:', tokenCookie);
+      return tokenCookie.replace(/^"|"$/g, "");
+    } else {
+      console.log('Không tìm thấy cookie có tên là "token"');
+    }
+  }
+  const [loadingBuying, setLoadingBuying] = React.useState(false);
+  function checkTokenCookieTrue() {
+    // Lấy tất cả các cookies
+    var allCookies = document.cookie;
+
+    // Tách các cookies thành mảng
+    var cookiesArray = allCookies.split(";");
+
+    // Duyệt qua mỗi cookie để tìm cookie có tên là "token"
+    for (var i = 0; i < cookiesArray.length; i++) {
+      var cookie = cookiesArray[i].trim();
+      // Kiểm tra xem cookie có bắt đầu bằng "token="
+      if (cookie.indexOf("token=") === 0) {
+        // Lấy giá trị của cookie
+        var tokenValue = cookie.substring("token=".length, cookie.length);
+
+        // Kiểm tra xem giá trị của cookie có rỗng hay không
+        if (tokenValue !== "") {
+          // Có token và không rỗng
+
+          // setTokenString(tokenValue)
+          return true;
+        } else {
+          // Có token nhưng rỗng
+          console.log("Có token nhưng giá trị rỗng.");
+          return false;
+        }
+      }
+    }
+  }
   const [loading, setLoading] = React.useState(true);
 
   const open = useOutletContext();
@@ -71,7 +156,7 @@ function Category({
   };
   const drawerWidth = 240;
   const [data, setData] = React.useState([]);
-
+  const token = useSelector((state) => state.auth.token);
   const [dataCreator, setDataCreator] = React.useState([]);
   const [dataProduct, setDataProduct] = React.useState([]);
   const getData = async () => {
@@ -96,6 +181,7 @@ function Category({
   useEffect(() => {
     getData();
   }, [userId]);
+
   const getDataCategory = async () => {
     setLoading(true);
 
@@ -115,12 +201,239 @@ function Category({
       setLoading(false);
     }
   };
+  const styleModal = {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: "60%",
+    height: "80%",
+    bgcolor: "background.paper",
+    boxShadow: 24,
+    p: 4,
+  };
+
+  const styleModalBuyingFree = {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: "30%",
+    height: "40%",
+    bgcolor: "background.paper",
+    boxShadow: 24,
+    display: "flex",
+    alignItems: "center",
+    flexDirection: "column",
+    paddingTop: "15px",
+
+    borderRadius: "15px",
+  };
   const [newids, setId] = React.useState(location.state?.id);
 
   useEffect(() => {
     getDataCategory();
   }, [id]);
+  const [openModal, setOpenModal] = React.useState(false);
+  const handleOpen = () => setOpenModal(true);
+  const handleClose = () => setOpenModal(false);
+  const [modalBuyingFree, setModalBuyingFree] = React.useState(false);
+  const authentication = checkTokenCookieTrue();
+  const handleCloseModalFree = () => setModalBuyingFree(false);
 
+  const handleBuying = async () => {
+    if (!authentication) {
+      navigate("/login", { replace: true });
+    } else {
+      if (dataProduct.sale_price === 0) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+
+        // setLoadingBuying(true)
+        setModalBuyingFree(true);
+        // const response = await axios.post
+      } else {
+        setOpenModal(true);
+      }
+    }
+  };
+
+  const handleFavorite = async () => {
+    if (!authentication) {
+      navigate("/login", { replace: true });
+    } else {
+      setLoadingFavorite(true);
+      try {
+        const response = await axios.post(`${network}/saveFavoriteProductAPI`, {
+          product_id: id,
+          token: checkTokenCookie(),
+        });
+        if (response && response.data && response.data.code === 0) {
+          setFavorite(true);
+          setLoadingFavorite(false);
+          // saveFavoriteProductAPI
+        } else {
+          console.error("Invalid response format");
+          setLoadingFavorite(false);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error.message);
+        setLoadingFavorite(false);
+      }
+    }
+  };
+  const [selectedOption, setSelectedOption] = React.useState(null);
+
+  // Hàm xử lý sự kiện khi radio button thay đổi
+  const handleRadioChange = (event) => {
+    setSelectedOption(event.target.value);
+    console.log(event.target.value);
+  };
+  const deleteFavorite = async () => {
+    setLoadingFavorite(true);
+    try {
+      const response = await axios.post(`${network}/deleteFavoriteProductAPI`, {
+        product_id: id,
+        token: checkTokenCookie(),
+      });
+      if (response && response.data && response.data.code === 0) {
+        setFavorite(false);
+        // saveFavoriteProductAPI
+        setLoadingFavorite(false);
+      } else {
+        console.error("Invalid response format");
+        setLoadingFavorite(false);
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error.message);
+      setLoadingFavorite(false);
+    }
+  };
+  const [loadingBuyingFunc, setLoadingBuyingFunc] = React.useState(false);
+  const handleBuyingFreeFunc = async () => {
+    setLoadingBuyingFunc(true);
+    try {
+      const response = await axios.post(`${network}/buyProductAPI`, {
+        id: id,
+        token: checkTokenCookie(),
+        type: "ecoin",
+      });
+      if (response && response.data && response.data.code === 0) {
+        // saveFavoriteProductAPI
+        setLoadingBuyingFunc(false);
+        handleCloseModalFree();
+        toast.success("Mua mẫu thiết kế thành công", {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "dark",
+        });
+      } else {
+        console.error("Invalid response format");
+        setLoadingBuyingFunc(false);
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error.message);
+      setLoadingBuyingFunc(false);
+    }
+  };
+  const [errMessage, setErrMessage] = React.useState(false);
+  const [loadingBuyingLostFunc, setLoadingBuyingLostFunc] =
+    React.useState(false);
+  const handleBuyingFunc = async () => {
+    console.log(typeof(selectedOption))
+    if (selectedOption === null) {
+      setErrMessage(true);
+    } 
+    else {
+      if (selectedOption === "1" ) {
+        try {
+        const response = await axios.post(`${network}/buyProductAPI`, {
+          id: id,
+          token: checkTokenCookie(),
+          type: "ecoin",
+        });
+        if (response && response.data && response.data.code === 0) {
+          setLoadingBuyingLostFunc(false);
+          handleCloseModalFree();
+          toast.success("Mua mẫu thiết kế thành công", {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "dark",
+          });
+        } else {
+          console.error("Invalid response format");
+          setLoadingBuyingLostFunc(false);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error.message);
+        setLoadingBuyingLostFunc(false);
+      }
+      }
+      else if (selectedOption === "2") {
+        setLoadingBuyingLostFunc(true);
+      try {
+        const response = await axios.post(`${network}/buyProductAPI`, {
+          id: id,
+          token: checkTokenCookie(),
+        });
+        if (response && response.data && response.data.code === 0) {
+          // saveFavoriteProductAPI
+          setLoadingBuyingLostFunc(false);
+          handleCloseModalFree();
+          toast.success("Mua mẫu thiết kế thành công", {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "dark",
+          });
+        } else {
+          console.error("Invalid response format");
+          setLoadingBuyingLostFunc(false);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error.message);
+        setLoadingBuyingLostFunc(false);
+      }
+      }
+    }
+  };
+  useEffect(() => {
+    const checkFavoriteCategory = async () => {
+      if (authentication) {
+        try {
+          const response = await axios.post(
+            `${network}/checkFavoriteProductAPI`,
+            {
+              product_id: id,
+              token: checkTokenCookie(),
+            }
+          );
+          if (response && response.data && response.data.code === 1) {
+            setFavorite(true);
+          } else {
+          }
+        } catch (error) {
+          console.error("Error fetching data:", error.message);
+        }
+      } else {
+        setFavorite(false);
+      }
+    };
+    checkFavoriteCategory();
+  }, []);
   useEffect(() => {
     const getData = async () => {
       try {
@@ -145,7 +458,6 @@ function Category({
   }, []);
   const dataTime = (date) => {
     const dateObject = new Date(date);
-
     const year = dateObject.getFullYear();
     const month = dateObject.getMonth() + 1;
     const day = dateObject.getDate();
@@ -164,17 +476,19 @@ function Category({
       marginLeft: `${drawerWidth}px`,
     }),
   }));
+
   return (
-    <Main
-      open={open}
-      style={{
-        backgroundColor: "rgb(245, 245, 245)",
-        paddingTop: "7%",
-        flex: 1,
-        paddingRight: "5%",
-        paddingLeft: "5%",
-      }}
-    >
+    // <Main
+    //   open={open}
+    //   style={{
+    //     backgroundColor: "rgb(245, 245, 245)",
+    //     paddingTop: "7%",
+    //     flex: 1,
+    //     paddingRight: "5%",
+    //     paddingLeft: "5%",
+    //   }}
+    // >
+    <div style={{ paddingTop: "6%", paddingLeft: "20%" }}>
       <div className="category-wrapper">
         <div className="category-wrapper__block">
           {/* <img
@@ -284,7 +598,9 @@ function Category({
               <Skeleton style={{ height: 40, width: 150, marginLeft: 10 }} />
             ) : (
               <p className="category-wrapper__block---title----price-----newer">
-                ₫{formatPrice(dataProduct.sale_price)}
+                {dataProduct.sale_price === 0
+                  ? "Miễn phí"
+                  : `₫ ${formatPrice(dataProduct.sale_price)}`}
               </p>
             )}
 
@@ -419,25 +735,64 @@ function Category({
             </div>
           ) : (
             <div className="category-wrapper__block---title----buttonContainer">
+              {favorite ? (
+                <button
+                  className="category-wrapper__block---title----button"
+                  style={{
+                    backgroundColor: "rgb(255, 245, 241)",
+                    border: "1px solid rgb(255, 66, 78)",
+                    color: "rgb(255, 66, 78)",
+                    width: "200px",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => deleteFavorite()}
+                >
+                  {loadingFavorite ? (
+                    <span class="loader"></span>
+                  ) : (
+                    <>
+                      <span style={{ paddingRight: 5, alignSelf: "center" }}>
+                        <CheckIcon />
+                      </span>
+                      Đã yêu thích
+                    </>
+                  )}
+                </button>
+              ) : (
+                <button
+                  className="category-wrapper__block---title----button"
+                  style={{
+                    backgroundColor: "rgb(255, 245, 241)",
+                    border: "1px solid rgb(255, 66, 78)",
+                    color: "rgb(255, 66, 78)",
+                    width: "200px",
+                    cursor: "pointer",
+                    animation: "thumbs-up 2s linear infinite",
+                  }}
+                  onClick={() => handleFavorite()}
+                >
+                  {loadingFavorite ? (
+                    <span class="loader"></span>
+                  ) : (
+                    <>
+                      <span style={{ paddingRight: 5, alignSelf: "center" }}>
+                        <FavoriteIcon />
+                      </span>
+                      Thêm vào yêu thích
+                    </>
+                  )}
+                </button>
+              )}
               <button
                 className="category-wrapper__block---title----button"
                 style={{
-                  backgroundColor: "rgb(255, 245, 241)",
-                  border: "1px solid rgb(255, 66, 78)",
-                  color: "rgb(255, 66, 78)",
-                  width: "200px",
+                  backgroundColor: "rgb(255, 66, 78)",
+                  color: "white",
+                  cursor: "pointer",
                 }}
+                onClick={() => handleBuying()}
               >
-                <span style={{ paddingRight: 5, alignSelf: "center" }}>
-                  <FavoriteIcon />
-                </span>
-                Thêm vào yêu thích
-              </button>
-              <button
-                className="category-wrapper__block---title----button"
-                style={{ backgroundColor: "rgb(255, 66, 78)", color: "white" }}
-              >
-                Mua ngay
+                {loadingBuying ? <span class="loader"></span> : "Mua ngay"}
               </button>
             </div>
           )}
@@ -537,7 +892,7 @@ function Category({
                     fontSize: "17px",
                     margin: 0,
                     marginBottom: 15,
-                    
+
                     marginTop: 10,
                   }}
                 >
@@ -579,15 +934,14 @@ function Category({
                   justifyContent: "center",
                   borderRadius: 10,
                   marginLeft: "12px",
-                  cursor:"pointer",
+                  cursor: "pointer",
                 }}
                 onClick={() => {
+                  navigate(`/category/${item.id}`);
+                  // window.location.reload();
 
-                navigate(`/category/${item.id}`)
-                                // window.location.reload();
-
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
               >
                 <div
                   className="carousel-item"
@@ -680,7 +1034,17 @@ function Category({
       </div>
 
       {loading ? (
-        <div style={{display: 'flex', flexDirection: 'row',width: '100%',height: 300,backgroundColor: 'white',paddingLeft: "3%",paddingTop: '3%'}}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            width: "100%",
+            height: 300,
+            backgroundColor: "white",
+            paddingLeft: "3%",
+            paddingTop: "3%",
+          }}
+        >
           <Skeleton height={100} width={100} circle />
           <div className="user__creator---block----name-container">
             <Skeleton height={20} width={150} />
@@ -710,7 +1074,7 @@ function Category({
           }}
         >
           <p style={{ fontSize: 18, fontWeight: "bold" }}>Chi tiết tác giả</p>
-          
+
           <div className="user__creator---block">
             <img
               className="user__creator---block----img"
@@ -823,7 +1187,235 @@ function Category({
       )}
 
       <div className="footer-wrapper"></div>
-    </Main>
+      <Modal
+        open={openModal}
+        onClose={handleClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={styleModal}>
+          <p style={{ fontWeight: "bold", fontSize: 20 }}>Thanh toán</p>
+          <TableContainer component={Paper}>
+            <Table sx={{ minWidth: 650 }} aria-label="simple table">
+              <TableHead>
+                <TableRow>
+                  {/* <TableCell
+                    style={{ border: "1px solid #ddd" }}
+                    align="center"
+                  >
+                    Ảnh sản phẩm
+                  </TableCell> */}
+                  <TableCell
+                    style={{ border: "1px solid #ddd" }}
+                    align="center"
+                  >
+                    Tên sản phẩm
+                  </TableCell>
+                  <TableCell
+                    style={{ border: "1px solid #ddd" }}
+                    align="center"
+                  >
+                    Tác giả
+                  </TableCell>
+                  <TableCell
+                    style={{ border: "1px solid #ddd" }}
+                    align="center"
+                  >
+                    Khuyến mãi
+                  </TableCell>
+                  <TableCell
+                    style={{ border: "1px solid #ddd" }}
+                    align="center"
+                  >
+                    Giá tiền
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                <TableRow
+                  sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                >
+                  {/* <TableCell
+                    component="th"
+                    scope="row"
+                    style={{
+                      border: "1px solid #ddd",
+                      width: "10%",
+                      maxHeight: "20px",
+                    }}
+                  >
+                    <img
+                      src={dataProduct.image}
+                      alt=""
+                      style={{ width: "100%", height: "100%" }}
+                    />
+                  </TableCell> */}
+                  <TableCell align="left" style={{ border: "1px solid #ddd" }}>
+                    {dataProduct.name}
+                  </TableCell>
+                  <TableCell align="left" style={{ border: "1px solid #ddd" }}>
+                    {dataCreator?.name}
+                  </TableCell>
+                  <TableCell align="left" style={{ border: "1px solid #ddd" }}>
+                    {Math.round(
+                      100 - (dataProduct.sale_price / dataProduct.price) * 100
+                    )}
+                    %
+                  </TableCell>
+                  <TableCell align="left" style={{ border: "1px solid #ddd" }}>
+                    {formatPrice(dataProduct.sale_price)}₫
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <div class="container">
+            <form>
+              <label>
+                <input
+                  type="radio"
+                  name="radio"
+                  onChange={(e) => handleRadioChange(e)}
+                  value={1}
+                />
+                <span>Mua bằng Ecoin</span>
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="radio"
+                  onChange={(e) => handleRadioChange(e)}
+                  value={2}
+                />
+                <span>Mua bằng tiền mặt</span>
+              </label>
+            </form>
+          </div>
+          <div className="money--cart__container">
+            <div className="money--cart__block-new">
+              <div className="money--cart__block">
+                <div className="money--cart__block---content">
+                  <p style={{ fontSize: 15 }}>Giá tiền gốc :</p>
+                  <p style={{ fontSize: 15, fontWeight: "bold" }}>
+                    {formatPrice(dataProduct.price)}đ
+                  </p>
+                </div>
+              </div>
+              <div className="money--cart__block">
+                <div className="money--cart__block---content">
+                  <p>Khuyến mãi :</p>
+                  <p style={{ fontSize: 15, fontWeight: "bold" }}>
+                    {Math.round(
+                      100 - (dataProduct.sale_price / dataProduct.price) * 100
+                    )}
+                    %
+                  </p>
+                </div>
+              </div>
+              <div className="money--cart__block">
+                <div className="money--cart__block---content">
+                  <p>Tổng :</p>
+                  <p style={{ fontSize: 20, fontWeight: "bold" }}>
+                    {dataProduct.sale_price === 0
+                      ? "Miễn phí"
+                      : `${formatPrice(dataProduct.sale_price)} ₫`}
+                  </p>
+                </div>
+              </div>
+              <div
+                style={{
+                  width: "100%",
+                  justifyContent: "flex-end",
+                  display: "flex",
+                }}
+              >
+                <Button
+                  variant="contained"
+                  size="medium"
+                  style={{
+                    height: 40,
+                    textTransform: "none",
+                    color: "white",
+                    backgroundColor: "rgb(255, 66, 78)",
+                    width: "30%",
+                    alignSelf: "right",
+                    marginTop: "2%",
+                  }}
+                  onClick={() => {
+                    handleBuyingFunc();
+                  }}
+                >
+                  {" "}
+                  {loadingBuyingLostFunc ? (
+                    <span class="loaderNew"></span>
+                  ) : (
+                    "Thanh toán"
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Box>
+      </Modal>
+      <Modal
+        open={modalBuyingFree}
+        onClose={handleCloseModalFree}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={styleModalBuyingFree}>
+          <p
+            style={{
+              margin: 0,
+              fontSize: 22,
+              fontWeight: "bold",
+              paddingBottom: "10px",
+            }}
+          >
+            Thanh toán
+          </p>
+          <img
+            src={confirmBuying}
+            alt=""
+            style={{ width: "20%", height: "30%", marginBottom: "10px" }}
+          />
+          <p
+            style={{
+              margin: 0,
+              fontSize: 17,
+              fontWeight: "500",
+              paddingTop: "10px",
+            }}
+          >
+            Bạn có chắc chắn mua mẫu thiết kế này chứ ?
+          </p>
+
+          <Button
+            variant="contained"
+            size="medium"
+            style={{
+              height: 40,
+              alignSelf: "center",
+              textTransform: "none",
+              color: "white",
+              backgroundColor: "rgb(255, 66, 78)",
+              marginTop: "40px",
+              width: "50%",
+            }}
+            onClick={() => {
+              handleBuyingFreeFunc();
+            }}
+          >
+            {" "}
+            {loadingBuyingFunc ? (
+              <span class="loaderNew"></span>
+            ) : (
+              "Mua mẫu thiết kế"
+            )}
+          </Button>
+        </Box>
+      </Modal>
+    </div>
   );
 }
 

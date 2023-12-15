@@ -902,7 +902,7 @@ export default function PersistentDrawerLeft() {
                     alt=""
                     style={{ marginRight: 5, height: 20, width: 20 }}
                   />
-                  Y
+                  Bộ sưu tập
                 </Link>
               </li>
               <li
@@ -974,7 +974,7 @@ export default function PersistentDrawerLeft() {
                     alt=""
                     style={{ marginRight: 5, height: 20, width: 20 }}
                   />
-                  Dự án
+                  Danh mục
                 </Link>
               </li>
 
@@ -1053,7 +1053,7 @@ export default function PersistentDrawerLeft() {
                         alt=""
                         style={{ marginRight: 5, height: 20, width: 20 }}
                       />
-                      Bộ sưu tập
+                      Yêu thích
                     </Link>
                   </li>
                   <li
