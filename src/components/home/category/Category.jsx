@@ -236,7 +236,10 @@ function Category({
   }, [id]);
   const [openModal, setOpenModal] = React.useState(false);
   const handleOpen = () => setOpenModal(true);
-  const handleClose = () => setOpenModal(false);
+  const handleClose = () => {
+    setSelectedOption(null);
+    setOpenModal(false)
+  };
   const [modalBuyingFree, setModalBuyingFree] = React.useState(false);
   const authentication = checkTokenCookieTrue();
   const handleCloseModalFree = () => setModalBuyingFree(false);
@@ -345,6 +348,8 @@ function Category({
     React.useState(false);
   const handleBuyingFunc = async () => {
     console.log(typeof(selectedOption))
+          console.log(selectedOption)
+
     if (selectedOption === null) {
       setErrMessage(true);
     } 

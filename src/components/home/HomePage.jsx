@@ -1,7 +1,6 @@
 import React, {useEffect} from 'react'
 import classNames from 'classnames/bind';
 import styles from './Header.scss';
-import Header from './header/Header';
 import PersistentDrawerLeft from './content/Content';
 
 
