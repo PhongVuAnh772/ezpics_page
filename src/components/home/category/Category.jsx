@@ -118,6 +118,66 @@ function Category({
       console.log('Không tìm thấy cookie có tên là "token"');
     }
   }
+
+  function checkMoneyCookie() {
+    // Lấy tất cả các cookies
+    var allCookies = document.cookie;
+
+    // Tách các cookies thành mảng các cặp key-value
+    var cookiesArray = allCookies.split("; ");
+
+    // Tìm cookie có tên là "token"
+    var tokenCookie;
+    for (var i = 0; i < cookiesArray.length; i++) {
+      var cookie = cookiesArray[i];
+      var cookieParts = cookie.split("=");
+      var cookieName = cookieParts[0];
+      var cookieValue = cookieParts[1];
+
+      if (cookieName === "user_login") {
+        tokenCookie = cookieValue;
+        break;
+      }
+    }
+
+    // Kiểm tra nếu đã tìm thấy cookie "token"
+    if (tokenCookie) {
+      return  JSON.parse(tokenCookie)
+
+    } else {
+      console.log('Không tìm thấy cookie có tên là "token"');
+    }
+  }
+
+  function checkIcoinCookie() {
+    // Lấy tất cả các cookies
+    var allCookies = document.cookie;
+
+    // Tách các cookies thành mảng các cặp key-value
+    var cookiesArray = allCookies.split("; ");
+
+    // Tìm cookie có tên là "token"
+    var tokenCookie;
+    for (var i = 0; i < cookiesArray.length; i++) {
+      var cookie = cookiesArray[i];
+      var cookieParts = cookie.split("=");
+      var cookieName = cookieParts[0];
+      var cookieValue = cookieParts[1];
+
+      if (cookieName === "user_login") {
+        tokenCookie = cookieValue;
+        break;
+      }
+    }
+
+    // Kiểm tra nếu đã tìm thấy cookie "token"
+    if (tokenCookie) {
+      return  tokenCookie?.ecoin;
+
+    } else {
+      console.log('Không tìm thấy cookie có tên là "token"');
+    }
+  }
   const [loadingBuying, setLoadingBuying] = React.useState(false);
   function checkTokenCookieTrue() {
     // Lấy tất cả các cookies
@@ -239,7 +299,9 @@ function Category({
   const handleClose = () => {
     setSelectedOption(null);
     setOpenModal(false)
-  };
+    setErrMessage(false);
+    setErrMessageMoney(false);
+    };
   const [modalBuyingFree, setModalBuyingFree] = React.useState(false);
   const authentication = checkTokenCookieTrue();
   const handleCloseModalFree = () => setModalBuyingFree(false);
@@ -290,6 +352,8 @@ function Category({
   const handleRadioChange = (event) => {
     setSelectedOption(event.target.value);
     console.log(event.target.value);
+    setErrMessage(false);
+    setErrMessageMoney(false);
   };
   const deleteFavorite = async () => {
     setLoadingFavorite(true);
@@ -344,17 +408,24 @@ function Category({
     }
   };
   const [errMessage, setErrMessage] = React.useState(false);
+    const [errMessageMoney, setErrMessageMoney] = React.useState(false);
+
   const [loadingBuyingLostFunc, setLoadingBuyingLostFunc] =
     React.useState(false);
   const handleBuyingFunc = async () => {
-    console.log(typeof(selectedOption))
-          console.log(selectedOption)
-
+          console.log(dataProduct)
+      
+       const money = checkMoneyCookie()
+      // checkIcoinCookie
+      console.log(money)
     if (selectedOption === null) {
       setErrMessage(true);
     } 
     else {
-      if (selectedOption === "1" ) {
+      if (selectedOption === "1"  &&  money?.ecoin > dataProduct.ecoin ) {
+        console.log("th1")
+                  setLoadingBuyingLostFunc(true);
+
         try {
         const response = await axios.post(`${network}/buyProductAPI`, {
           id: id,
@@ -363,7 +434,8 @@ function Category({
         });
         if (response && response.data && response.data.code === 0) {
           setLoadingBuyingLostFunc(false);
-          handleCloseModalFree();
+                  setOpenModal(false);
+
           toast.success("Mua mẫu thiết kế thành công", {
             position: "top-right",
             autoClose: 5000,
@@ -383,8 +455,10 @@ function Category({
         setLoadingBuyingLostFunc(false);
       }
       }
-      else if (selectedOption === "2") {
+      else if (selectedOption === "2"  &&  money?.account_balance > dataProduct.sale_price ) {
         setLoadingBuyingLostFunc(true);
+                console.log("th2")
+
       try {
         const response = await axios.post(`${network}/buyProductAPI`, {
           id: id,
@@ -394,6 +468,8 @@ function Category({
           // saveFavoriteProductAPI
           setLoadingBuyingLostFunc(false);
           handleCloseModalFree();
+                            setOpenModal(false);
+
           toast.success("Mua mẫu thiết kế thành công", {
             position: "top-right",
             autoClose: 5000,
@@ -407,11 +483,17 @@ function Category({
         } else {
           console.error("Invalid response format");
           setLoadingBuyingLostFunc(false);
+          setErrMessageMoney(true);
         }
       } catch (error) {
         console.error("Error fetching data:", error.message);
         setLoadingBuyingLostFunc(false);
       }
+      }
+      else {
+                  setErrMessageMoney(true);
+                          setLoadingBuyingLostFunc(false);
+
       }
     }
   };
@@ -1327,6 +1409,8 @@ function Category({
                   </p>
                 </div>
               </div>
+              {errMessage && <p style={{textAlign:"right",fontSize: 14,color:'red'}}>Bạn phải lựa chọn phương thức thanh toán</p>}
+                  {errMessageMoney && <p style={{textAlign:"right",fontSize: 14,color:'red'}}>Bạn không đủ số dư để thực hiện</p>}
               <div
                 style={{
                   width: "100%",
@@ -1350,9 +1434,10 @@ function Category({
                     handleBuyingFunc();
                   }}
                 >
+                  
                   {" "}
                   {loadingBuyingLostFunc ? (
-                    <span class="loaderNew"></span>
+                    <span className="loaderNew"></span>
                   ) : (
                     "Thanh toán"
                   )}

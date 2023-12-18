@@ -9,7 +9,9 @@ import {
   Outlet,
 } from "react-router-dom";
 import Slider from "react-slick";
-
+import iosstore from './ios.png'
+import ezpicsLogo from './ezpics-logo.png'
+import ggplay from './ggplay.png'
 import { styled, useTheme } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
@@ -328,7 +330,7 @@ export default function PersistentDrawerLeft() {
             <Toolbar style={{ width: "100%" }}>
               <img
                 alt=""
-                src="https://ezpics.vn/wp-content/uploads/2023/05/LOGO-EZPICS-300.png"
+                src={ezpicsLogo}
                 loading="lazy"
                 style={{ width: "3%", height: "5%" }}
               />
@@ -411,7 +413,7 @@ export default function PersistentDrawerLeft() {
               fontWeight: 700,
             }}
           >
-            Ezpics Trên IOS
+            Ezpics đã có mặt trên mọi nền tảng
           </p>
           <p
             style={{
@@ -438,16 +440,16 @@ export default function PersistentDrawerLeft() {
                 (window.location.href =
                   "https://apps.apple.com/vn/app/ezpics-d%C3%B9ng-l%C3%A0-th%C3%ADch/id1659195883?l=vi?l=vi")
               }
-              src="https://ezpics.vn/wp-content/uploads/2023/05/logo-appstore-download-300x95.png"
+              src={iosstore}
               alt=""
-              style={{ width: 180, height: 63,cursor: "pointer" }}
+              style={{ width: 180, height: 43,cursor: "pointer" }}
             />
             <img
               onClick={() =>
                 (window.location.href =
                   "https://play.google.com/store/apps/details?id=vn.ezpics&hl=vi&gl=US")
               }
-              src="https://ezpics.vn/wp-content/uploads/2023/05/Logo-google-play-store-e1578969817208-300x95.png"
+              src={ggplay}
               alt=""
               style={{ width: 180, height: 63,cursor: "pointer" }}
             />

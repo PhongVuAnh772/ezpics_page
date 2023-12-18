@@ -129,7 +129,7 @@ function Login() {
     document.cookie = name + "=" + value + ";" + expires + ";path=/";
   }
   var expirationHours = 3; // số giờ tồn tại của cookie
-
+  const [errMessage,setErrMessage] = useState(false)
   const signInButton = async () => {
     setLoading(true);
     try {
@@ -150,7 +150,7 @@ function Login() {
         navigate("/", { replace: true });
       } else {
         setLoading(false);
-
+        setErrMessage(true);
         console.log(response.data);
       }
     } catch (e) {
@@ -210,6 +210,19 @@ function Login() {
                 onChange={(e) => setPassWord(e.target.value)}
                 placeholder="Mật khẩu"
               />
+              {errMessage && <p
+                style={{
+                 
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  paddingTop: 5,
+                  textAlign: "center",
+                  margin: 0,
+                  color: 'red',
+                }}
+              >
+                Số điện thoại hoặc mật khẩu sai
+              </p>}
               <button style={submitButton} onClick={() => signInButton()}>
                  {loading ? <div class="lds-ring-login"><div></div><div></div><div></div><div></div></div> : "Đăng nhập"}
               </button>

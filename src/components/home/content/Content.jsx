@@ -57,6 +57,7 @@ import magicwand from "./assets/magic-wand1.png";
 import home from "./assets/home.png";
 import folder from "./assets/folder.png";
 import paintPaletted from "./assets/paint-palette.png";
+import officialLogo from './ezpics-logo.png'
 import "./Content.scss";
 import { CHANGE_VALUE, DELETE_ALL_VALUES } from "../../../store/slice/infoUser";
 import crownPro from "./assets/crown.png";
@@ -401,7 +402,7 @@ export default function PersistentDrawerLeft() {
 
               <img
                 alt=""
-                src="https://ezpics.vn/wp-content/uploads/2023/05/LOGO-EZPICS-300.png"
+                src={officialLogo}
                 loading="lazy"
                 style={{ width: "3%", height: "5%", cursor: "pointer" }}
                 onClick={() => navigate("/")}
@@ -1053,7 +1054,7 @@ export default function PersistentDrawerLeft() {
                         alt=""
                         style={{ marginRight: 5, height: 20, width: 20 }}
                       />
-                      Yêu thích
+                      Kho của bạn
                     </Link>
                   </li>
                   <li
